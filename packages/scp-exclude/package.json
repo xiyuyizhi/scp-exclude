@@ -13,7 +13,10 @@
     "scp",
     "node-scp",
     "scp-with-exclude",
-    "scp-exclude"
+    "scp-exclude",
+    "scp-ignore",
+    "scp-ignore-file",
+    "scp-ignore-dir"
   ],
   "repository": {
     "type": "git",
