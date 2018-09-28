@@ -1,0 +1,28 @@
+{
+  "name": "scp-exclude",
+  "version": "0.0.1",
+  "description": "extension the linux command scp,with the capacity of exclude some directory or file when use scp",
+  "main": "bin/scp-exclude.js",
+  "bin": {
+    "scp-exclude": "bin/scp-exclude.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "scp",
+    "node-scp",
+    "scp-with-exclude"
+  ],
+  "author": "xiyuyizhi",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "execa": "^1.0.0",
+    "fs-extra": "^7.0.0",
+    "minimist": "^1.2.0"
+  },
+  "devDependencies": {
+    "lerna": "^3.0.0-beta.21"
+  }
+}
