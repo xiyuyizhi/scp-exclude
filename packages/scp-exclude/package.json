@@ -12,7 +12,8 @@
   "keywords": [
     "scp",
     "node-scp",
-    "scp-with-exclude"
+    "scp-with-exclude",
+    "scp-exclude"
   ],
   "repository": {
     "type": "git",
@@ -28,5 +29,8 @@
   },
   "devDependencies": {
     "lerna": "^3.0.0-beta.21"
+  },
+  "engines": {
+    "node": ">=8"
   }
 }
