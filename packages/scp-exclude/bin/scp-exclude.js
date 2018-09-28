@@ -5,15 +5,27 @@ const execa = require('execa');
 const minimist = require('minimist');
 const chalk = require('chalk');
 const fs = require('fs-extra');
+const semver = require('semver');
 
-// process.env.NODE_ENV = 'DEBUG';
+process.env.NODE_ENV = 'DEBUG';
 
 const DEV_DEBUG = ['DEVELOPMENT', 'DEBUG'].includes(process.env.NODE_ENV);
 const workPath = process.cwd();
+const requiredVersion = require('../package.json').engines.node;
 const args = minimist(process.argv.slice(2));
 args.ignore = args.ignore || args.I || '';
 const ignorePatternList = args.ignore.split(/(,|，)/).map(x => new RegExp(x));
 
+if (!semver.satisfies(process.version, requiredVersion)) {
+  console.log(
+    chalk.red(
+      `scp-exclude require node version ${requiredVersion},but the node version on you machine is ${
+        process.version
+      }`
+    )
+  );
+  return;
+}
 process.on('unhandledRejection', err => {
   console.log(chalk.red(err.message));
   process.exit(1);
@@ -47,7 +59,7 @@ function geneMan() {
   );
   console.log(
     chalk.black.bgGreen(
-      '3: you can see the more detail instruct at https://github.com/xiyuyizhi/scp-exclude.git/readme.md'
+      '3: you can see the more detail instruct at https://github.com/xiyuyizhi/scp-exclude.git'
     )
   );
 }
