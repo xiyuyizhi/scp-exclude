@@ -6,13 +6,14 @@ const minimist = require('minimist');
 const chalk = require('chalk');
 const fs = require('fs-extra');
 const semver = require('semver');
-
 const DEV_DEBUG = ['DEVELOPMENT', 'DEBUG'].includes(process.env.NODE_ENV);
 const workPath = process.cwd();
 const requiredVersion = require('../package.json').engines.node;
 const args = minimist(process.argv.slice(2));
-args.ignore = args.ignore || args.I || '';
-const ignorePatternList = args.ignore.split(/(,|，)/).map(x => new RegExp(x));
+args.ignore = args.ignore || args.I;
+const ignorePatternList = args.ignore
+  ? args.ignore.split(/(,|，)/).map(x => new RegExp(x))
+  : [];
 
 if (!semver.satisfies(process.version, requiredVersion)) {
   console.log(
@@ -86,7 +87,6 @@ function checkWithDot(paths) {
 
 async function scp(remoteHost, remoteRootPath, localDir) {
   const newPathOnRemote = path.join(remoteRootPath, localDir);
-
   if (checkPathToIgnore(localDir)) return;
 
   if (checkIsDir(localDir)) {
