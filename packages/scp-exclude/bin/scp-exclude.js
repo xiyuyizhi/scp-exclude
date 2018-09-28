@@ -7,8 +7,6 @@ const chalk = require('chalk');
 const fs = require('fs-extra');
 const semver = require('semver');
 
-process.env.NODE_ENV = 'DEBUG';
-
 const DEV_DEBUG = ['DEVELOPMENT', 'DEBUG'].includes(process.env.NODE_ENV);
 const workPath = process.cwd();
 const requiredVersion = require('../package.json').engines.node;
