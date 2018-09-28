@@ -1,6 +1,6 @@
 {
   "name": "scp-exclude",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "extension the linux command scp,with the capacity of exclude some directory or file when use scp",
   "main": "bin/scp-exclude.js",
   "bin": {
@@ -14,6 +14,10 @@
     "node-scp",
     "scp-with-exclude"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiyuyizhi/scp-exclude"
+  },
   "author": "xiyuyizhi",
   "license": "ISC",
   "dependencies": {
