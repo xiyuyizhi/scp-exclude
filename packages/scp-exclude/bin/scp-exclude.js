@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// process.env.NODE_ENV = 'DEBUG';
+
 const path = require('path');
 const execa = require('execa');
 const minimist = require('minimist');
@@ -14,7 +16,6 @@ args.ignore = args.ignore || args.I;
 const ignorePatternList = args.ignore
   ? args.ignore.split(/(,|，)/).map(x => new RegExp(x))
   : [];
-
 if (!semver.satisfies(process.version, requiredVersion)) {
   console.log(
     chalk.red(
@@ -26,16 +27,24 @@ if (!semver.satisfies(process.version, requiredVersion)) {
   return;
 }
 process.on('unhandledRejection', err => {
-  console.log(chalk.red(err.message));
+  if (DEV_DEBUG) {
+    console.log(chalk.red(err.message));
+  } else {
+    console.log(err);
+  }
   process.exit(1);
 });
 
 process.on('uncaughtException', err => {
-  console.log(chalk.red(err.message));
+  if (DEV_DEBUG) {
+    console.log(chalk.red(err.message));
+  } else {
+    console.log(err);
+  }
   process.exit(1);
 });
 
-if (args._.length !== 2 || args.h || args.help) {
+if (args._.length < 2 || args.h || args.help) {
   geneMan();
   return;
 }
@@ -64,20 +73,29 @@ function geneMan() {
 }
 
 if (checkIsUpload()) {
-  const remoteAddress = args._[1];
-  const localRootPath = args._[0];
+  const remoteAddress = args._[args._.length - 1];
+  const localRootPath = args._.slice(0, args._.length - 1);
   const [remoteHost, remoteRootPath] = remoteAddress.split(':');
-  if (checkWithDot(localRootPath)) {
-    throw new Error('not regular file');
-    return;
-  }
-  scp(remoteHost, remoteRootPath, localRootPath);
+
+  localRootPath.forEach(localFile => {
+    if (checkWithDot(localFile)) {
+      throw new Error('not regular file');
+      return;
+    }
+    if (checkPathToIgnore(localFile)) return;
+    if (checkIsDir(localFile)) {
+      uploadDir(localFile, remoteHost, remoteRootPath);
+    } else {
+      const newPathOnRemote = path.join(remoteRootPath, localFile);
+      upload(localFile, [remoteHost, newPathOnRemote].join(':'));
+    }
+  });
 } else {
   upload(...args._);
 }
 
 function checkIsUpload() {
-  const lastArgPath = path.resolve(workPath, args._[1]);
+  const lastArgPath = path.resolve(workPath, args._[args._.length - 1]);
   return !fs.existsSync(lastArgPath);
 }
 
@@ -85,20 +103,35 @@ function checkWithDot(paths) {
   return new RegExp(`^\\.\\.\\${path.sep}?`).test(paths);
 }
 
-async function scp(remoteHost, remoteRootPath, localDir) {
+async function uploadDir(localDir, remoteHost, remoteRootPath) {
   const newPathOnRemote = path.join(remoteRootPath, localDir);
-  if (checkPathToIgnore(localDir)) return;
+  const files = fs.readdirSync(localDir);
+  if (!files.length) return;
+  await mkdirRemote(newPathOnRemote, remoteHost);
+  const filesBelowCurrentDir = files
+    .map(file => path.join(localDir, file))
+    .filter(file => !checkIsDir(file) && !checkPathToIgnore(file))
+    .join(' ');
+  const dirsBelowCurrentDir = files
+    .map(file => path.join(localDir, file))
+    .filter(file => checkIsDir(file) && !checkPathToIgnore(file));
 
-  if (checkIsDir(localDir)) {
-    const files = fs.readdirSync(localDir);
-    if (!files.length) return;
-    await mkdirRemote(newPathOnRemote, remoteHost);
-    files.forEach(file => {
-      const currentLocalPath = path.join(localDir, file);
-      scp(remoteHost, remoteRootPath, currentLocalPath);
-    });
+  upload(filesBelowCurrentDir, [remoteHost, newPathOnRemote].join(':'));
+
+  dirsBelowCurrentDir.forEach(file => {
+    uploadDir(file, remoteHost, remoteRootPath);
+  });
+}
+
+function upload(localPath, remote) {
+  if (!localPath) return;
+  const params = [...extractOptions(), ...localPath.split(' '), remote];
+  if (DEV_DEBUG) {
+    console.log(params);
   } else {
-    await upload(localDir, [remoteHost, newPathOnRemote].join(':'));
+    execa.sync('scp', params, {
+      stdio: 'inherit'
+    });
   }
 }
 
@@ -119,17 +152,6 @@ async function mkdirRemote(dir, remoteHost) {
     console.log(`${remoteHost} --- ${mkdirCommand}`);
   } else {
     await execa('ssh', [remoteHost, mkdirCommand]);
-  }
-}
-
-function upload(...a) {
-  const params = [...extractOptions(), ...a];
-  if (DEV_DEBUG) {
-    console.log(params);
-  } else {
-    execa.sync('scp', params, {
-      stdio: 'inherit'
-    });
   }
 }
 
